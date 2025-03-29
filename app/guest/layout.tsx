@@ -126,7 +126,35 @@ export default function GuestLayout({ children }: { children: ReactNode }) {
         showMobileNavLabels={true}
         mobileStickyHeader={true}
         maxWidthClass="max-w-5xl"
-        customMobileNavItem={MobileNavItem}
+        customMobileNavItem={
+          ({ item, isActive }: { 
+            item: { 
+              title: string; 
+              href: string; 
+              icon: React.ReactNode; 
+              mobileLabel?: string; 
+              description?: string 
+            }; 
+            isActive: boolean 
+          }) => (
+            <motion.div
+              whileTap={{ scale: 0.95 }}
+              className={`relative flex flex-col items-center justify-center ${isActive ? 'text-blue-600' : 'text-muted-foreground'}`}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="activeNavIndicator"
+                  className="absolute -top-1.5 w-1.5 h-1.5 rounded-full bg-blue-600"
+                  transition={{ type: "spring", duration: 0.5 }}
+                />
+              )}
+              <div className="relative">
+                {item.icon}
+              </div>
+              <span className="text-[10px] mt-1">{item.mobileLabel}</span>
+            </motion.div>
+          )
+        }
         sidebarClassName="bg-white border-r border-slate-100"
         logoClassName="text-blue-600"
         navItemClassName={(isActive) => 
