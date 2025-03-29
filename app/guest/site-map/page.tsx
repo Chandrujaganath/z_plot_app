@@ -1,48 +1,26 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronLeft, Map, MapPin, Home, Search, Calendar, ThumbsUp, Maximize, Minimize, ZoomIn, ZoomOut } from "lucide-react"
-import { MiniProfileCard } from "@/components/ui/mini-profile-card"
-import { useAuth } from "@/lib/auth-context"
+import { 
+  ChevronLeft, Map, MapPin, Home, Search, Calendar, ThumbsUp, 
+  Maximize, Minimize, ZoomIn, ZoomOut, Info, X, List
+} from "lucide-react"
 import { useState, useEffect, useRef } from "react"
-import ProtectedRoute from "@/components/protected-route"
-import AppShell from "@/components/layout/app-shell"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-
-// Navigation items for the guest dashboard
-const navItems = [
-  {
-    title: "Dashboard",
-    href: "/guest/dashboard",
-    icon: <Home className="h-5 w-5" />,
-  },
-  {
-    title: "Explore",
-    href: "/guest/explore",
-    icon: <Search className="h-5 w-5" />,
-  },
-  {
-    title: "Book Visit",
-    href: "/guest/book-visit",
-    icon: <Calendar className="h-5 w-5" />,
-  },
-  {
-    title: "Feedback",
-    href: "/guest/feedback",
-    icon: <ThumbsUp className="h-5 w-5" />,
-  },
-]
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function SiteMapPage() {
-  const { user } = useAuth()
   const [zoom, setZoom] = useState(1)
   const [isDragging, setIsDragging] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [startPos, setStartPos] = useState({ x: 0, y: 0 })
+  const [selectedProject, setSelectedProject] = useState<number | null>(null)
+  const [showProjectList, setShowProjectList] = useState(false)
   const mapRef = useRef<HTMLDivElement>(null)
   
   // Mock project data with location coordinates
@@ -53,7 +31,10 @@ export default function SiteMapPage() {
       location: "Lake District, Mumbai",
       coordinates: { x: 100, y: 100 },
       status: "available",
-      plotsAvailable: 12
+      plotsAvailable: 12,
+      totalPlots: 20,
+      description: "Luxurious villas with stunning sunset views, perfect for families seeking tranquility.",
+      amenities: ["Swimming Pool", "Garden", "Clubhouse", "24/7 Security"]
     },
     {
       id: 2,
@@ -61,7 +42,10 @@ export default function SiteMapPage() {
       location: "Highland Area, Shimla",
       coordinates: { x: 250, y: 150 },
       status: "selling-fast",
-      plotsAvailable: 4
+      plotsAvailable: 4,
+      totalPlots: 16,
+      description: "Exclusive mountain properties with panoramic views and premium finishes.",
+      amenities: ["Hiking Trails", "Spa", "Fireplace", "Covered Parking"]
     },
     {
       id: 3, 
@@ -69,7 +53,10 @@ export default function SiteMapPage() {
       location: "River Valley, Goa",
       coordinates: { x: 180, y: 320 },
       status: "available",
-      plotsAvailable: 8
+      plotsAvailable: 8,
+      totalPlots: 14,
+      description: "Elegant properties along the riverside with private access to water activities.",
+      amenities: ["Dock Access", "Riverside Deck", "Park", "Guest House"]
     },
     {
       id: 4,
@@ -77,7 +64,10 @@ export default function SiteMapPage() {
       location: "Downtown, Delhi",
       coordinates: { x: 400, y: 200 },
       status: "coming-soon",
-      plotsAvailable: 0
+      plotsAvailable: 0,
+      totalPlots: 30,
+      description: "Modern urban living with proximity to business districts and entertainment.",
+      amenities: ["Gym", "Rooftop Garden", "Conference Room", "Game Room"]
     },
     {
       id: 5,
@@ -85,7 +75,10 @@ export default function SiteMapPage() {
       location: "Coastal Area, Chennai",
       coordinates: { x: 320, y: 400 },
       status: "available",
-      plotsAvailable: 6
+      plotsAvailable: 6,
+      totalPlots: 12,
+      description: "Premium beachfront properties with direct access to pristine beaches.",
+      amenities: ["Beach Access", "Infinity Pool", "Tennis Court", "Yacht Club"]
     }
   ]
 
@@ -109,15 +102,18 @@ export default function SiteMapPage() {
 
   // Touch events for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true)
-    setStartPos({ 
-      x: e.touches[0].clientX - position.x, 
-      y: e.touches[0].clientY - position.y 
-    })
+    if (e.touches.length === 1) {
+      setIsDragging(true)
+      setStartPos({ 
+        x: e.touches[0].clientX - position.x, 
+        y: e.touches[0].clientY - position.y 
+      })
+    }
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return
+    if (!isDragging || e.touches.length !== 1) return
+    e.preventDefault()
     setPosition({
       x: e.touches[0].clientX - startPos.x,
       y: e.touches[0].clientY - startPos.y
@@ -126,6 +122,31 @@ export default function SiteMapPage() {
 
   const handleTouchEnd = () => {
     setIsDragging(false)
+  }
+
+  // Pinch to zoom - detect multiple touch points
+  const handleTouchStartZoom = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      )
+      setStartPos({ ...startPos, d: dist })
+    }
+  }
+
+  const handleTouchMoveZoom = (e: React.TouchEvent) => {
+    if (e.touches.length !== 2 || !startPos.d) return
+    e.preventDefault()
+    
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    )
+    
+    const newZoom = Math.max(0.5, Math.min(2, zoom * (dist / startPos.d)))
+    setZoom(newZoom)
+    setStartPos({ ...startPos, d: dist })
   }
 
   // Zoom controls
@@ -142,23 +163,39 @@ export default function SiteMapPage() {
     setPosition({ x: 0, y: 0 })
   }
 
+  const focusOnProject = (projectId: number) => {
+    const project = projects.find(p => p.id === projectId)
+    if (project) {
+      setSelectedProject(projectId)
+      // Center the map on the project
+      if (mapRef.current) {
+        const mapWidth = mapRef.current.clientWidth
+        const mapHeight = mapRef.current.clientHeight
+        setPosition({
+          x: -(project.coordinates.x * zoom - mapWidth/2),
+          y: -(project.coordinates.y * zoom - mapHeight/2)
+        })
+      }
+    }
+  }
+
   // Get location marker color based on status
   const getMarkerColor = (status: string) => {
     switch(status) {
-      case "available": return "bg-green-500";
-      case "selling-fast": return "bg-orange-500";
-      case "coming-soon": return "bg-blue-500";
-      default: return "bg-gray-500";
+      case "available": return "bg-green-500 shadow-green-200";
+      case "selling-fast": return "bg-orange-500 shadow-orange-200";
+      case "coming-soon": return "bg-blue-500 shadow-blue-200";
+      default: return "bg-gray-500 shadow-gray-200";
     }
   }
 
   // Get status badge
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case "available": return "bg-green-100 text-green-700";
-      case "selling-fast": return "bg-orange-100 text-orange-700";
-      case "coming-soon": return "bg-blue-100 text-blue-700";
-      default: return "bg-gray-100 text-gray-700";
+      case "available": return "bg-green-100 text-green-700 border-green-200";
+      case "selling-fast": return "bg-orange-100 text-orange-700 border-orange-200";
+      case "coming-soon": return "bg-blue-100 text-blue-700 border-blue-200";
+      default: return "bg-gray-100 text-gray-700 border-gray-200";
     }
   }
 
@@ -173,6 +210,66 @@ export default function SiteMapPage() {
   }
 
   return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header section */}
+      <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white pb-6 pt-4 px-4 rounded-b-xl shadow-lg">
+        <div className="flex items-center mb-4">
+          <Link href="/guest/dashboard" className="mr-3">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-blue-500">
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold">Site Map</h1>
+            <p className="text-sm text-blue-100">Explore property locations and availability</p>
+          </div>
+          
+          <div className="ml-auto flex gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:bg-blue-500"
+              onClick={() => setShowProjectList(!showProjectList)}
+            >
+              <List className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* View toggle */}
+        <Tabs defaultValue="map" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-blue-500">
+            <TabsTrigger value="map" className="data-[state=active]:bg-blue-700">Map View</TabsTrigger>
+            <TabsTrigger value="list" className="data-[state=active]:bg-blue-700">List View</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="map" className="px-0 pt-4 pb-0">
+            {/* Map overview */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Badge variant="outline" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                <div className="w-2 h-2 rounded-full bg-green-400 mr-1.5"></div>
+                Available
+              </Badge>
+              <Badge variant="outline" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                <div className="w-2 h-2 rounded-full bg-orange-400 mr-1.5"></div>
+                Selling Fast
+              </Badge>
+              <Badge variant="outline" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                <div className="w-2 h-2 rounded-full bg-blue-400 mr-1.5"></div>
+                Coming Soon
+              </Badge>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+      
+      <div className="relative w-full">
+        {/* Project List Overlay */}
+        <AnimatePresence>
+          {showProjectList && (
+            <motion.div 
+              initial={{ opacity: 0, x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
     <ProtectedRoute requiredRoles={["guest"]}>
       <AppShell navItems={navItems} title="Site Map">
         <motion.div 
