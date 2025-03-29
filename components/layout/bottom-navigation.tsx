@@ -165,7 +165,8 @@ export default function BottomNavigation({
     >
       <div className="flex justify-around items-center h-16 px-2">
         {navItems.map((item, index) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          // Add null check for pathname
+          const isActive = pathname ? (pathname === item.href || pathname.startsWith(`${item.href}/`)) : false;
           const label = item.mobileLabel || item.title || '';
 
           return (

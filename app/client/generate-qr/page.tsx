@@ -46,9 +46,8 @@ export default function GenerateVisitorQRPage() {
         // Get client's owned plots
         const plotsData = await getClientOwnedPlots(user.uid)
         setPlots(plotsData)
-
         // Check if plotId is in URL params
-        const plotId = searchParams.get("plotId")
+        const plotId = searchParams?.get("plotId")
         if (plotId && plotsData.some((plot) => plot.id === plotId)) {
           setSelectedPlotId(plotId)
         } else if (plotsData.length > 0) {
@@ -232,14 +231,14 @@ export default function GenerateVisitorQRPage() {
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>Expires: {formatDate(activeQR.expiryDate)}</span>
+                      <span>Expires: {formatDate(activeQR.expiryDate.toString())}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between rounded-md bg-blue-50 p-3 text-blue-800">
                     <div className="flex items-center gap-2">
                       <Clock className="h-5 w-5" />
-                      <span>{getTimeRemaining(activeQR.expiryDate)}</span>
+                      <span>{getTimeRemaining(activeQR.expiryDate.toString())}</span>
                     </div>
                     <Button variant="outline" size="sm" className="bg-white" onClick={() => window.print()}>
                       Print QR Code
@@ -273,7 +272,9 @@ export default function GenerateVisitorQRPage() {
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                   {qrHistory.map((qr) => {
-                    const isExpired = new Date(qr.expiryDate) < new Date()
+                    const isExpired = qr.expiryDate instanceof Date 
+                      ? qr.expiryDate < new Date() 
+                      : new Date(qr.expiryDate.toString()) < new Date()
 
                     return (
                       <div key={qr.id} className={`rounded-md border p-3 ${isExpired ? "opacity-70" : ""}`}>
@@ -287,7 +288,7 @@ export default function GenerateVisitorQRPage() {
                             {isExpired ? "Expired" : "Active"}
                           </div>
                         </div>
-                        <div className="mt-1 text-sm text-muted-foreground">Created: {formatDate(qr.createdAt)}</div>
+                        <div className="mt-1 text-sm text-muted-foreground">Created: {formatDate(qr.createdAt.toString())}</div>
                         <div className="mt-1 text-sm text-muted-foreground">Purpose: {qr.purpose}</div>
                       </div>
                     )

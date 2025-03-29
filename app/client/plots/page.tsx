@@ -121,8 +121,8 @@ export default function ClientPlotsPage() {
                 <ClientPlotGrid
                   plots={plots}
                   onPlotClick={handlePlotSelect}
-                  selectedPlotId={selectedPlot?.id}
-                  clientId={user?.uid}
+                  selectedPlotId={selectedPlot?.id || ""}
+                  clientId={user?.uid || ""}
                 />
               )}
             </CardContent>

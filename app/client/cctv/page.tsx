@@ -32,9 +32,8 @@ export default function LiveCCTVPage() {
         // Get client's owned plots
         const plotsData = await getClientOwnedPlots(user.uid)
         setPlots(plotsData)
-
         // Check if plotId is in URL params
-        const plotId = searchParams.get("plotId")
+        const plotId = searchParams?.get("plotId")
         if (plotId && plotsData.some((plot) => plot.id === plotId)) {
           setSelectedPlotId(plotId)
 
