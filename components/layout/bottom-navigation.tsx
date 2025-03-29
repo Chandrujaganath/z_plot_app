@@ -55,6 +55,7 @@ export default function BottomNavigation({
 
   // Don't show bottom navigation on auth pages or on tablet/desktop
   if (
+    !pathname ||
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/unauthorized" ||
@@ -93,6 +94,27 @@ export default function BottomNavigation({
         }));
       }
       
+      // For client role, ensure the dashboard is included
+      if (userRole === "client") {
+        // Find the dashboard item
+        const dashboardItem = propNavItems.find(item => item.href === "/client/dashboard") || {
+          icon: <Home className="h-5 w-5" />,
+          title: "Dashboard", 
+          mobileLabel: "Home",
+          href: "/client/dashboard"
+        };
+        
+        // Add dashboard and then other important items (up to 4 more)
+        const otherItems = propNavItems
+          .filter(item => item.href !== "/client/dashboard")
+          .slice(0, 4);
+        
+        return [dashboardItem, ...otherItems].map(item => ({
+          ...item,
+          mobileLabel: item.mobileLabel || item.title || item.href.split('/').pop() || "Menu"
+        }));
+      }
+      
       // For other roles, use provided items but limit to 5 items max
       return propNavItems.slice(0, 5).map(item => ({
         ...item,
@@ -115,11 +137,11 @@ export default function BottomNavigation({
       // Other roles remain unchanged but need to be adapted to the new NavItem format
       case "client":
         return [
-          { icon: <Home className="h-5 w-5" />, title: "Home", mobileLabel: "Home", href: "/client/dashboard" },
+          { icon: <Home className="h-5 w-5" />, title: "Dashboard", mobileLabel: "Home", href: "/client/dashboard" },
           { icon: <Building className="h-5 w-5" />, title: "My Plots", mobileLabel: "Plots", href: "/client/plots" },
-          { icon: <History className="h-5 w-5" />, title: "Visits", mobileLabel: "Visits", href: "/client/visit-history" },
+          { icon: <History className="h-5 w-5" />, title: "Visit History", mobileLabel: "Visits", href: "/client/visit-history" },
           { icon: <FileText className="h-5 w-5" />, title: "Documents", mobileLabel: "Docs", href: "/client/documents" },
-          { icon: <User className="h-5 w-5" />, title: "Profile", mobileLabel: "Profile", href: "/client/profile" },
+          { icon: <QrCode className="h-5 w-5" />, title: "Generate QR", mobileLabel: "QR", href: "/client/generate-qr" },
         ]
       // (Other cases remain the same but match the new format)
       default:
