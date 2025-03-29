@@ -60,8 +60,8 @@ export default function BottomNavigation({ navItems: propNavItems, showLabels = 
   // Define navigation items based on user role
   const getNavItems = (): NavItem[] => {
     if (propNavItems && propNavItems.length) {
-      // Use provided items but limit to 5 items max to fit mobile screens
-      return propNavItems.slice(0, 5).map(item => ({
+      // Use provided items but limit to 6 items max to fit mobile screens
+      return propNavItems.slice(0, 6).map(item => ({
         ...item,
         // For consistent interface - if mobileLabel doesn't exist, use title
         mobileLabel: item.mobileLabel || item.title || item.href.split('/').pop() || "Menu"
