@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { Home, User, Briefcase, Building, FileText, BarChart, LogOut, Settings, Calendar, MessageSquare, Map, Users, QrCode, Receipt, History, ThumbsUp, Search, Eye } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
 
 // Define types for navItems to consistently have label property
 type NavItem = {
@@ -13,14 +14,25 @@ type NavItem = {
   icon: React.ReactNode;
   title: string;
   mobileLabel?: string;
+  description?: string;
 };
 
 interface BottomNavigationProps {
   navItems?: NavItem[];
   showLabels?: boolean;
+  customNavItem?: React.ComponentType<{ 
+    item: NavItem, 
+    isActive: boolean 
+  }>;
+  navItemClassName?: (isActive: boolean) => string;
 }
 
-export default function BottomNavigation({ navItems: propNavItems, showLabels = true }: BottomNavigationProps) {
+export default function BottomNavigation({ 
+  navItems: propNavItems, 
+  showLabels = true, 
+  customNavItem: CustomNavItem,
+  navItemClassName
+}: BottomNavigationProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { userRole, logout } = useAuth()
@@ -115,28 +127,34 @@ export default function BottomNavigation({ navItems: propNavItems, showLabels = 
 
           return (
             <Link key={index} href={item.href} className="w-full">
-              <div
-                className={`flex flex-col items-center justify-center h-full ${
-                  isActive ? "text-blue-600" : "text-muted-foreground"
-                }`}
-              >
-                <div className={`${isActive ? 'scale-110 transition-transform duration-200' : ''}`}>
-                  {item.icon}
+              {CustomNavItem ? (
+                <CustomNavItem item={item} isActive={isActive} />
+              ) : (
+                <div
+                  className={cn(
+                    "flex flex-col items-center justify-center h-full",
+                    navItemClassName ? navItemClassName(isActive) : 
+                    isActive ? "text-blue-600" : "text-muted-foreground"
+                  )}
+                >
+                  <div className={`${isActive ? 'scale-110 transition-transform duration-200' : ''}`}>
+                    {item.icon}
+                  </div>
+                  
+                  {showLabels && (
+                    <span className="text-[10px] mt-1 font-medium">{label}</span>
+                  )}
+                  
+                  {isActive && (
+                    <motion.div
+                      className="absolute bottom-0 h-0.5 bg-blue-600 rounded-t-full"
+                      style={{ width: `${100 / navItems.length}%` }}
+                      layoutId="bottomNavIndicator"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
                 </div>
-                
-                {showLabels && (
-                  <span className="text-[10px] mt-1 font-medium">{label}</span>
-                )}
-                
-                {isActive && (
-                  <motion.div
-                    className="absolute bottom-0 h-0.5 bg-blue-600 rounded-t-full"
-                    style={{ width: `${100 / navItems.length}%` }}
-                    layoutId="bottomNavIndicator"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </div>
+              )}
             </Link>
           )
         })}

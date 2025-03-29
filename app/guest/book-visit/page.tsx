@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { CalendarIcon, Clock, ChevronRight, Phone, User, PenLine, Building, MapPin } from "lucide-react"
+import { CalendarIcon, Clock, ChevronRight, Phone, User, PenLine, Building, MapPin, CheckCircle2, Calendar, Check } from "lucide-react"
 import {
   getProject,
   getProjectPlots,
@@ -23,7 +23,7 @@ import {
 import type { Project, Plot, TimeSlot } from "@/lib/models"
 import { useAuth } from "@/lib/auth-context"
 import PlotGrid from "@/components/plot-grid"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
@@ -231,28 +231,39 @@ export default function BookVisitPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Book a Visit</h1>
-        <p className="text-muted-foreground text-sm">Schedule a site visit to explore your future property</p>
+    <div className="space-y-5">
+      {/* Header with gradient background */}
+      <div className="relative rounded-xl overflow-hidden mb-6">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 opacity-90"></div>
+        <div className="relative px-4 py-6 text-white">
+          <h1 className="text-2xl font-bold tracking-tight">Book a Visit</h1>
+          <p className="text-blue-100 text-sm mt-1">Schedule a site visit to explore your future property</p>
+        </div>
       </div>
 
       {/* Progress Steps */}
       <div className="w-full mb-6">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center relative mb-6">
+          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -translate-y-1/2 z-0"></div>
+          
           {[1, 2, 3, 4].map((step) => (
-            <div key={step} className="flex flex-col items-center">
+            <div key={step} className="flex flex-col items-center z-10">
               <div 
-                className={`w-8 h-8 rounded-full flex items-center justify-center mb-1
+                className={`w-10 h-10 rounded-full flex items-center justify-center mb-2
                   ${currentStep >= step 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-blue-100 text-blue-400'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
+                    : 'bg-white text-gray-400 border border-gray-200'
                   }
+                  transition-all duration-200
                 `}
               >
-                {step}
+                {currentStep > step ? (
+                  <CheckCircle2 className="h-5 w-5" />
+                ) : (
+                  <span className="text-sm font-medium">{step}</span>
+                )}
               </div>
-              <span className="text-xs hidden sm:inline">
+              <span className={`text-xs font-medium ${currentStep >= step ? 'text-blue-600' : 'text-gray-500'}`}>
                 {step === 1 && "Project"}
                 {step === 2 && "Plot"}
                 {step === 3 && "Time"}
@@ -261,391 +272,425 @@ export default function BookVisitPage() {
             </div>
           ))}
         </div>
-        <div className="relative h-2 bg-blue-100 rounded-full">
-          <motion.div 
-            className="absolute left-0 top-0 h-full bg-blue-600 rounded-full"
-            initial={{ width: '0%' }}
-            animate={{ width: `${((currentStep - 1) / 3) * 100}%` }}
-            transition={{ duration: 0.3 }}
-          />
-        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Step 1: Project Selection */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className={currentStep === 1 ? 'block' : 'hidden'}
-        >
-          <Card className="border-blue-100">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <Building className="h-5 w-5 mr-2 text-blue-500" />
-                Select a Project
-              </CardTitle>
-              <CardDescription>Choose the property development you'd like to visit</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                {projects.map((project) => (
-                  <Card 
-                    key={project.id} 
-                    className={`cursor-pointer hover:border-blue-300 transition-colors overflow-hidden
-                      ${selectedProject?.id === project.id ? 'border-blue-500 ring-2 ring-blue-200' : 'border-muted'}
-                    `}
-                    onClick={() => handleProjectChange(project.id)}
-                  >
-                    <div className="h-32 bg-blue-50 relative">
-                      {project.imageUrl ? (
-                        <img
-                          src={project.imageUrl}
-                          alt={project.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <Building className="h-8 w-8 text-blue-300" />
-                        </div>
-                      )}
-                      {selectedProject?.id === project.id && (
-                        <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
-                          ✓
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-3">
-                      <h3 className="font-medium">{project.name}</h3>
-                      <div className="flex items-center text-xs text-muted-foreground mt-1">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {project.location}
-                      </div>
-                      <div className="mt-2 flex justify-between items-center">
-                        <span className="text-xs text-blue-600 font-medium">
-                          {project.availablePlots} plots available
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {project.status || "Available"}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end border-t pt-4">
-              <Button 
-                type="button"
-                disabled={!selectedProject || loading}
-                onClick={() => setCurrentStep(2)}
-                className="rounded-full"
-              >
-                Continue
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
-        
-        {/* Step 2: Plot Selection */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: currentStep === 2 ? 1 : 0, y: currentStep === 2 ? 0 : 20 }}
-          transition={{ duration: 0.3 }}
-          className={currentStep === 2 ? 'block' : 'hidden'}
-        >
-          <Card className="border-blue-100">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg flex items-center">
-                  <MapPin className="h-5 w-5 mr-2 text-blue-500" />
-                  Select a Plot
-                </CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setCurrentStep(1)}
-                  className="h-8 px-2 text-blue-600"
-                >
-                  Back
-                </Button>
-              </div>
-              <CardDescription>
-                {selectedProject ? `Choose a plot in ${selectedProject.name}` : 'Select a plot for your visit'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedProject && (
-                <div className="space-y-4">
-                  <div className="bg-blue-50 p-3 rounded-md text-sm flex items-start">
-                    <Building className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
-                    <div>
-                      <p className="font-medium">{selectedProject.name}</p>
-                      <p className="text-muted-foreground">{selectedProject.location}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="border rounded-md p-4">
-                    {plots.length > 0 ? (
-                      <div className="h-[300px] max-w-full overflow-auto">
-                        <PlotGrid
-                          plots={plots}
-                          selectedPlotId={selectedPlot?.id}
-                          onPlotClick={handlePlotClick}
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                        <p>No plots available for this project</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {selectedPlot && (
-                    <div className="bg-blue-50 p-3 rounded-md">
-                      <p className="font-medium">Selected Plot: {selectedPlot.plotNumber}</p>
-                      <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Size:</span>{" "}
-                          {selectedPlot.dimensions || "N/A"}
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Price:</span>{" "}
-                          ₹{selectedPlot.price?.toLocaleString() || "N/A"}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-end border-t pt-4">
-              <Button 
-                type="button"
-                disabled={!selectedPlot || loading}
-                onClick={() => setCurrentStep(3)}
-                className="rounded-full"
-              >
-                Continue
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
-
-        {/* Step 3: Time Slot Selection */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: currentStep === 3 ? 1 : 0, y: currentStep === 3 ? 0 : 20 }}
-          transition={{ duration: 0.3 }}
-          className={currentStep === 3 ? 'block' : 'hidden'}
-        >
-          <Card className="border-blue-100">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg flex items-center">
-                  <CalendarIcon className="h-5 w-5 mr-2 text-blue-500" />
-                  Select Time Slot
-                </CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setCurrentStep(2)}
-                  className="h-8 px-2 text-blue-600"
-                >
-                  Back
-                </Button>
-              </div>
-              <CardDescription>Choose when you'd like to visit the property</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {selectedProject && selectedPlot && (
-                  <div className="bg-blue-50 p-3 rounded-md text-sm flex items-start mb-4">
-                    <Building className="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">{selectedProject.name} - Plot {selectedPlot.plotNumber}</p>
-                      <p className="text-muted-foreground">{selectedProject.location}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {timeSlots.length > 0 ? (
-                  <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
-                    {timeSlots.map((slot) => (
-                      <div
-                        key={slot.id}
-                        className={`border rounded-md p-3 cursor-pointer transition-colors
-                          ${selectedTimeSlot === slot.id ? 'border-blue-500 bg-blue-50' : 'hover:border-blue-200'}
+        <AnimatePresence mode="wait">
+          {/* Step 1: Project Selection */}
+          {currentStep === 1 && (
+            <motion.div 
+              key="step1"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="border-blue-100 shadow-sm rounded-xl overflow-hidden">
+                <CardHeader className="bg-blue-50/50 pb-4">
+                  <CardTitle className="text-lg flex items-center text-blue-800">
+                    <Building className="h-5 w-5 mr-2 text-blue-500" />
+                    Select a Project
+                  </CardTitle>
+                  <CardDescription>Choose the property development you'd like to visit</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {projects.map((project) => (
+                      <Card 
+                        key={project.id} 
+                        className={`cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-200 overflow-hidden
+                          ${selectedProject?.id === project.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-100'}
                         `}
-                        onClick={() => handleTimeSlotSelect(slot.id)}
+                        onClick={() => handleProjectChange(project.id)}
                       >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium flex items-center">
-                              <CalendarIcon className="h-4 w-4 mr-1 text-blue-500" />
-                              {slot.date}
-                            </p>
-                            <p className="text-sm text-muted-foreground flex items-center mt-1">
-                              <Clock className="h-4 w-4 mr-1" />
-                              {slot.startTime} - {slot.endTime}
-                            </p>
-                          </div>
-                          {selectedTimeSlot === slot.id && (
-                            <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
-                              ✓
+                        <div className="h-36 sm:h-32 bg-blue-50 relative">
+                          {project.imageUrl ? (
+                            <img
+                              src={project.imageUrl}
+                              alt={project.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <Building className="h-10 w-10 text-blue-300" />
+                            </div>
+                          )}
+                          <Badge className="absolute top-2 right-2 bg-black/60 text-white hover:bg-black/70 backdrop-blur-sm">
+                            {project.status || "Available"}
+                          </Badge>
+                          {selectedProject?.id === project.id && (
+                            <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
+                              <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
+                                <Check className="h-5 w-5" />
+                              </div>
                             </div>
                           )}
                         </div>
-                        
-                        <div className="mt-2 text-sm">
-                          <Badge variant={slot.availability === "limited" ? "outline" : "secondary"} className="text-xs">
-                            {slot.availability === "limited" ? "Limited Spots" : "Available"}
-                          </Badge>
-                        </div>
-                      </div>
+                        <CardContent className="p-3">
+                          <h3 className="font-medium">{project.name}</h3>
+                          <div className="flex items-center text-xs text-muted-foreground mt-1">
+                            <MapPin className="h-3 w-3 mr-1 text-blue-500" />
+                            <span className="truncate">{project.location}</span>
+                          </div>
+                          <div className="mt-2 flex justify-between items-center">
+                            <span className="text-xs text-blue-600 font-medium">
+                              {project.availablePlots} plots available
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
-                ) : (
-                  <div className="h-[100px] flex items-center justify-center text-muted-foreground">
-                    <p>No time slots available</p>
+                </CardContent>
+                <CardFooter className="flex justify-end border-t pt-4 bg-gray-50/50">
+                  <Button 
+                    type="button"
+                    disabled={!selectedProject || loading}
+                    onClick={() => setCurrentStep(2)}
+                    className="rounded-full shadow-sm"
+                  >
+                    Continue
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          )}
+          
+          {/* Step 2: Plot Selection */}
+          {currentStep === 2 && (
+            <motion.div 
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="border-blue-100 shadow-sm rounded-xl overflow-hidden">
+                <CardHeader className="bg-blue-50/50 pb-4">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg flex items-center text-blue-800">
+                      <MapPin className="h-5 w-5 mr-2 text-blue-500" />
+                      Select a Plot
+                    </CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setCurrentStep(1)}
+                      className="h-8 px-2 text-blue-600 hover:bg-blue-50"
+                    >
+                      Back
+                    </Button>
                   </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end border-t pt-4">
-              <Button 
-                type="button"
-                disabled={!selectedTimeSlot || loading}
-                onClick={() => setCurrentStep(4)}
-                className="rounded-full"
-              >
-                Continue
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
-
-        {/* Step 4: Personal Details */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: currentStep === 4 ? 1 : 0, y: currentStep === 4 ? 0 : 20 }}
-          transition={{ duration: 0.3 }}
-          className={currentStep === 4 ? 'block' : 'hidden'}
-        >
-          <Card className="border-blue-100">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg flex items-center">
-                  <User className="h-5 w-5 mr-2 text-blue-500" />
-                  Your Details
-                </CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setCurrentStep(3)}
-                  className="h-8 px-2 text-blue-600"
-                >
-                  Back
-                </Button>
-              </div>
-              <CardDescription>Provide your contact information</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Summary of selections */}
-                {selectedProject && selectedPlot && selectedTimeSlot && (
-                  <div className="bg-blue-50 p-4 rounded-md space-y-3 mb-4">
-                    <h3 className="font-medium">Visit Summary</h3>
-                    <Separator />
-                    <div className="grid gap-2 text-sm">
-                      <div className="flex items-start">
-                        <Building className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
+                  <CardDescription>
+                    {selectedProject ? `Choose a plot in ${selectedProject.name}` : 'Select a plot for your visit'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-5">
+                  {selectedProject && (
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 p-4 rounded-lg text-sm flex items-start border border-blue-100">
+                        <Building className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
                         <div>
-                          <p className="font-medium">{selectedProject.name}</p>
+                          <p className="font-medium text-blue-900">{selectedProject.name}</p>
                           <p className="text-muted-foreground">{selectedProject.location}</p>
                         </div>
                       </div>
-                      <div className="flex items-start">
-                        <MapPin className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
-                        <span>Plot {selectedPlot.plotNumber} ({selectedPlot.dimensions || "N/A"})</span>
+                      
+                      <div className="border rounded-lg p-4 bg-white shadow-sm">
+                        {plots.length > 0 ? (
+                          <div className="h-[300px] max-w-full overflow-auto">
+                            <PlotGrid
+                              plots={plots}
+                              selectedPlotId={selectedPlot?.id}
+                              onPlotClick={handlePlotClick}
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                            <p>No plots available for this project</p>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-start">
-                        <CalendarIcon className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
-                        <span>
-                          {timeSlots.find(ts => ts.id === selectedTimeSlot)?.date} • {" "}
-                          {timeSlots.find(ts => ts.id === selectedTimeSlot)?.startTime} - {" "}
-                          {timeSlots.find(ts => ts.id === selectedTimeSlot)?.endTime}
-                        </span>
+                      
+                      {selectedPlot && (
+                        <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                          <div className="flex items-center gap-2 text-green-800 mb-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <p className="font-medium">Selected Plot: {selectedPlot.plotNumber}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="h-6 text-xs border-blue-200 bg-blue-50 text-blue-700 rounded-md px-2">Size</Badge>
+                              <span>{selectedPlot.dimensions || "N/A"}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="h-6 text-xs border-blue-200 bg-blue-50 text-blue-700 rounded-md px-2">Price</Badge>
+                              <span>₹{selectedPlot.price?.toLocaleString() || "N/A"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="flex justify-end border-t pt-4 bg-gray-50/50">
+                  <Button 
+                    type="button"
+                    disabled={!selectedPlot || loading}
+                    onClick={() => setCurrentStep(3)}
+                    className="rounded-full shadow-sm"
+                  >
+                    Continue
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Step 3: Time Slot Selection */}
+          {currentStep === 3 && (
+            <motion.div 
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="border-blue-100 shadow-sm rounded-xl overflow-hidden">
+                <CardHeader className="bg-blue-50/50 pb-4">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg flex items-center text-blue-800">
+                      <Calendar className="h-5 w-5 mr-2 text-blue-500" />
+                      Select Time Slot
+                    </CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setCurrentStep(2)}
+                      className="h-8 px-2 text-blue-600 hover:bg-blue-50"
+                    >
+                      Back
+                    </Button>
+                  </div>
+                  <CardDescription>Choose when you'd like to visit the property</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-5">
+                  <div className="space-y-4">
+                    {selectedProject && selectedPlot && (
+                      <div className="bg-blue-50 p-4 rounded-lg text-sm flex items-start border border-blue-100 mb-4">
+                        <div className="bg-white p-2 rounded-full mr-3 shadow-sm">
+                          <Building className="h-5 w-5 text-blue-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-blue-900">{selectedProject.name} - Plot {selectedPlot.plotNumber}</p>
+                          <p className="text-muted-foreground">{selectedProject.location}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {timeSlots.length > 0 ? (
+                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                        {timeSlots.map((slot) => (
+                          <div
+                            key={slot.id}
+                            className={`border rounded-lg p-4 cursor-pointer transition-all duration-200
+                              ${selectedTimeSlot === slot.id 
+                                ? 'border-blue-500 bg-blue-50 shadow-md' 
+                                : 'hover:border-blue-200 hover:shadow-sm border-gray-100 bg-white'
+                              }
+                            `}
+                            onClick={() => handleTimeSlotSelect(slot.id)}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-medium flex items-center text-blue-800">
+                                  <CalendarIcon className="h-4 w-4 mr-2 text-blue-500" />
+                                  {slot.date}
+                                </p>
+                                <p className="text-sm text-muted-foreground flex items-center mt-2">
+                                  <Clock className="h-4 w-4 mr-2 text-blue-400" />
+                                  {slot.startTime} - {slot.endTime}
+                                </p>
+                              </div>
+                              {selectedTimeSlot === slot.id && (
+                                <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+                                  <Check className="h-4 w-4" />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="mt-3 pt-2 border-t border-dashed border-gray-200">
+                              <Badge 
+                                variant={slot.availability === "limited" ? "outline" : "secondary"} 
+                                className={`text-xs ${slot.availability === "limited" 
+                                  ? "border-amber-200 bg-amber-50 text-amber-700" 
+                                  : "border-green-200 bg-green-50 text-green-700"
+                                }`}
+                              >
+                                {slot.availability === "limited" ? "Limited Spots" : "Available"}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="h-[100px] flex items-center justify-center text-muted-foreground">
+                        <p>No time slots available</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end border-t pt-4 bg-gray-50/50">
+                  <Button 
+                    type="button"
+                    disabled={!selectedTimeSlot || loading}
+                    onClick={() => setCurrentStep(4)}
+                    className="rounded-full shadow-sm"
+                  >
+                    Continue
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Step 4: Personal Details */}
+          {currentStep === 4 && (
+            <motion.div 
+              key="step4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="border-blue-100 shadow-sm rounded-xl overflow-hidden">
+                <CardHeader className="bg-blue-50/50 pb-4">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg flex items-center text-blue-800">
+                      <User className="h-5 w-5 mr-2 text-blue-500" />
+                      Your Details
+                    </CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setCurrentStep(3)}
+                      className="h-8 px-2 text-blue-600 hover:bg-blue-50"
+                    >
+                      Back
+                    </Button>
+                  </div>
+                  <CardDescription>Provide your contact information</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-5">
+                  <div className="space-y-5">
+                    {/* Summary of selections */}
+                    {selectedProject && selectedPlot && selectedTimeSlot && (
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-lg space-y-4 mb-5 border border-blue-100 shadow-sm">
+                        <h3 className="font-semibold text-blue-800 flex items-center">
+                          <CheckCircle2 className="h-5 w-5 mr-2 text-blue-500" /> 
+                          Visit Summary
+                        </h3>
+                        <Separator className="bg-blue-100" />
+                        <div className="grid gap-3 text-sm">
+                          <div className="flex items-start">
+                            <div className="bg-white p-1.5 rounded-full mr-2.5 shadow-sm">
+                              <Building className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-blue-800">{selectedProject.name}</p>
+                              <p className="text-blue-600/70 text-xs">{selectedProject.location}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start">
+                            <div className="bg-white p-1.5 rounded-full mr-2.5 shadow-sm">
+                              <MapPin className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <span className="text-blue-800">Plot {selectedPlot.plotNumber} ({selectedPlot.dimensions || "N/A"})</span>
+                          </div>
+                          <div className="flex items-start">
+                            <div className="bg-white p-1.5 rounded-full mr-2.5 shadow-sm">
+                              <CalendarIcon className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <span className="text-blue-800">
+                              {timeSlots.find(ts => ts.id === selectedTimeSlot)?.date} • {" "}
+                              {timeSlots.find(ts => ts.id === selectedTimeSlot)?.startTime} - {" "}
+                              {timeSlots.find(ts => ts.id === selectedTimeSlot)?.endTime}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name" className="flex items-center font-medium">
+                          <User className="h-4 w-4 mr-2 text-blue-500" />
+                          Full Name
+                        </Label>
+                        <Input 
+                          id="name" 
+                          value={name} 
+                          onChange={(e) => setName(e.target.value)} 
+                          className="border-gray-200 focus-visible:ring-blue-500 rounded-lg h-11 shadow-sm"
+                          placeholder="Enter your full name"
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone" className="flex items-center font-medium">
+                          <Phone className="h-4 w-4 mr-2 text-blue-500" />
+                          Phone Number
+                        </Label>
+                        <Input 
+                          id="phone" 
+                          value={phone} 
+                          onChange={(e) => setPhone(e.target.value)} 
+                          className="border-gray-200 focus-visible:ring-blue-500 rounded-lg h-11 shadow-sm"
+                          placeholder="Enter your phone number"
+                          type="tel"
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="notes" className="flex items-center font-medium">
+                          <PenLine className="h-4 w-4 mr-2 text-blue-500" />
+                          Notes (Optional)
+                        </Label>
+                        <Textarea
+                          id="notes"
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          placeholder="Any special requests or questions about your visit?"
+                          className="min-h-[100px] border-gray-200 focus-visible:ring-blue-500 rounded-lg shadow-sm"
+                        />
                       </div>
                     </div>
                   </div>
-                )}
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="flex items-center">
-                      <User className="h-4 w-4 mr-1" />
-                      Full Name
-                    </Label>
-                    <Input 
-                      id="name" 
-                      value={name} 
-                      onChange={(e) => setName(e.target.value)} 
-                      className="border-blue-100 focus-visible:ring-blue-500"
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="flex items-center">
-                      <Phone className="h-4 w-4 mr-1" />
-                      Phone Number
-                    </Label>
-                    <Input 
-                      id="phone" 
-                      value={phone} 
-                      onChange={(e) => setPhone(e.target.value)} 
-                      className="border-blue-100 focus-visible:ring-blue-500"
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes" className="flex items-center">
-                      <PenLine className="h-4 w-4 mr-1" />
-                      Notes (Optional)
-                    </Label>
-                    <Textarea
-                      id="notes"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Any special requests or questions about your visit?"
-                      className="min-h-[100px] border-blue-100 focus-visible:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between border-t pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setCurrentStep(3)}
-                className="rounded-full"
-              >
-                Back
-              </Button>
-              <Button 
-                type="submit"
-                disabled={!selectedProject || !selectedPlot || !selectedTimeSlot || !name || !phone || submitting}
-                className="rounded-full bg-blue-600 hover:bg-blue-700"
-              >
-                {submitting ? "Submitting..." : "Book Visit"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
+                </CardContent>
+                <CardFooter className="flex justify-between border-t pt-4 bg-gray-50/50">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setCurrentStep(3)}
+                    className="rounded-full"
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={!selectedProject || !selectedPlot || !selectedTimeSlot || !name || !phone || submitting}
+                    className="rounded-full bg-blue-600 hover:bg-blue-700 shadow-md"
+                  >
+                    {submitting ? "Submitting..." : "Book Visit"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </form>
       
       <Toaster />

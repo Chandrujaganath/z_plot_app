@@ -18,10 +18,24 @@ interface AppShellProps {
     href: string
     icon: React.ReactNode
     mobileLabel?: string 
+    description?: string
   }>
   showMobileNavLabels?: boolean
   mobileStickyHeader?: boolean
   maxWidthClass?: string
+  customMobileNavItem?: React.ComponentType<{ 
+    item: { 
+      title: string
+      href: string
+      icon: React.ReactNode
+      mobileLabel?: string 
+      description?: string
+    }, 
+    isActive: boolean 
+  }>
+  sidebarClassName?: string
+  logoClassName?: string
+  navItemClassName?: (isActive: boolean) => string
 }
 
 export default function AppShell({ 
@@ -32,7 +46,11 @@ export default function AppShell({
   headerActions,
   showMobileNavLabels = false,
   mobileStickyHeader = false,
-  maxWidthClass = "max-w-7xl"
+  maxWidthClass = "max-w-7xl",
+  customMobileNavItem,
+  sidebarClassName,
+  logoClassName,
+  navItemClassName
 }: AppShellProps) {
   const pathname = usePathname()
   const [isMounted, setIsMounted] = useState(false)
@@ -67,7 +85,7 @@ export default function AppShell({
               : "bg-transparent"
           )}
         >
-          <h1 className="text-lg font-semibold truncate">{mobileTitle || title}</h1>
+          <h1 className={cn("text-lg font-semibold truncate", logoClassName)}>{mobileTitle || title}</h1>
           {headerActions && (
             <div className="flex items-center space-x-2">
               {headerActions}
@@ -96,7 +114,9 @@ export default function AppShell({
       {/* Bottom Navigation */}
       <BottomNavigation 
         navItems={navItems} 
-        showLabels={showMobileNavLabels} 
+        showLabels={showMobileNavLabels}
+        customNavItem={customMobileNavItem}
+        navItemClassName={navItemClassName}
       />
     </div>
   )
