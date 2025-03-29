@@ -1,0 +1,69 @@
+# App Hosting configuration for ZPlotApp
+
+# Settings for Cloud Run
+runConfig:
+  minInstances: 1
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+# Build configuration
+buildConfig:
+  nodeVersion: '20'
+  packageManager: 'yarn'
+  installCommand: 'yarn install'
+  buildCommand: 'yarn build'
+
+# Environment variables and secrets
+env:
+  # Firebase configuration
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyAX_lJ47R3yjFKrqENfytRaTC9nhVsSnsA"
+    
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "realestate-8877b.firebaseapp.com"
+    
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "realestate-8877b"
+    
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "realestate-8877b.firebasestorage.app"
+    
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "172592249579"
+    
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:172592249579:web:d293d9f4a5c3b2b81e5cae"
+    
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: "G-QMSBQJEKHS"
+    
+  - variable: NEXT_PUBLIC_FIREBASE_DATABASE_URL
+    value: "https://realestate-8877b-default-rtdb.firebaseio.com"
+    
+  # Firebase Admin configuration (server-side only)
+  - variable: FIREBASE_PROJECT_ID
+    value: "realestate-8877b"
+    availability:
+      - RUNTIME
+      
+  - variable: FIREBASE_CLIENT_EMAIL
+    value: "firebase-adminsdk-fbsvc@realestate-8877b.iam.gserviceaccount.com"
+    availability:
+      - RUNTIME
+
+# Environment variables and secrets.
+# env:
+  # Configure environment variables.
+  # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
+  # - variable: MESSAGE
+  #   value: Hello world!
+  #   availability:
+  #     - BUILD
+  #     - RUNTIME
+
+  # Grant access to secrets in Cloud Secret Manager.
+  # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
+  # - variable: MY_SECRET
+  #   secret: mySecretRef

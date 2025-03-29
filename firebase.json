@@ -1,0 +1,10 @@
+{
+  "apphosting": {
+    "source": ".",
+    "build": {
+      "nodeVersion": "20",
+      "packageManager": "yarn",
+      "script": "build"
+    }
+  }
+}
