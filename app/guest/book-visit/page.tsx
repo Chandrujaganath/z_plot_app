@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { CalendarIcon, Clock, ChevronRight, Phone, User, NotebookPen, Building, MapPin } from "lucide-react"
+import { CalendarIcon, Clock, ChevronRight, Phone, User, PenLine, Building, MapPin } from "lucide-react"
 import {
   getProject,
   getProjectPlots,
@@ -613,7 +613,7 @@ export default function BookVisitPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="notes" className="flex items-center">
-                      <NotebookPen className="h-4 w-4 mr-1" />
+                      <PenLine className="h-4 w-4 mr-1" />
                       Notes (Optional)
                     </Label>
                     <Textarea

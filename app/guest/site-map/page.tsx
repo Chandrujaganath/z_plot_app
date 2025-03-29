@@ -18,7 +18,7 @@ export default function SiteMapPage() {
   const [zoom, setZoom] = useState(1)
   const [isDragging, setIsDragging] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [startPos, setStartPos] = useState({ x: 0, y: 0 })
+  const [startPos, setStartPos] = useState<{ x: number; y: number; d?: number }>({ x: 0, y: 0 })
   const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const [showProjectList, setShowProjectList] = useState(false)
   const mapRef = useRef<HTMLDivElement>(null)
@@ -260,207 +260,185 @@ export default function SiteMapPage() {
               </Badge>
             </div>
           </TabsContent>
+          
+          <TabsContent value="list" className="px-0 pt-4 pb-0">
+            <div className="space-y-2">
+              {projects.map(project => (
+                <Card key={project.id} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="flex items-start p-3 cursor-pointer" onClick={() => focusOnProject(project.id)}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${getMarkerColor(project.status)}`}>
+                        <MapPin className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-medium truncate">{project.name}</h3>
+                          <Badge className={getStatusBadge(project.status)}>
+                            {getStatusLabel(project.status)}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500">{project.location}</p>
+                        <p className="text-xs mt-1">
+                          {project.plotsAvailable > 0 
+                            ? <span className="text-green-600">{project.plotsAvailable} of {project.totalPlots} plots available</span>
+                            : <span className="text-gray-500">Coming soon</span>
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
       
-      <div className="relative w-full">
+      {/* Map Container */}
+      <div className="relative w-full h-[calc(100vh-12rem)] overflow-hidden mt-4 p-4">
         {/* Project List Overlay */}
         <AnimatePresence>
           {showProjectList && (
             <motion.div 
               initial={{ opacity: 0, x: "100%" }}
               animate={{ opacity: 1, x: 0 }}
-    <ProtectedRoute requiredRoles={["guest"]}>
-      <AppShell navItems={navItems} title="Site Map">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative px-2 sm:px-4 pb-6"
-        >
-          {/* Header with gradient background */}
-          <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-blue-600 to-blue-500 rounded-b-3xl -z-10" />
-          
-          {/* Profile Card - Fixed at top */}
-          <div className="sticky top-0 z-10 pt-4 pb-3 bg-transparent">
-            <MiniProfileCard className="max-w-md mx-auto md:mx-0 shadow-lg backdrop-blur-sm bg-white/90" />
-          </div>
-          
-          <div className="mt-6 mb-6">
-            <div className="flex items-center">
-              <Link href="/guest/dashboard" className="text-white mr-2">
-                <ChevronLeft className="h-5 w-5" />
-              </Link>
-              <h1 className="text-2xl font-bold tracking-tight text-white">Site Map</h1>
-            </div>
-            <p className="text-blue-100 text-sm">Explore our properties and their locations</p>
-          </div>
-          
-          {/* Map Controls */}
-          <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Interactive Map</h2>
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-8 w-8" 
-                  onClick={zoomIn}
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-8 w-8" 
-                  onClick={zoomOut}
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-8 w-8" 
-                  onClick={resetView}
-                >
-                  <Maximize className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            {/* Map Legend */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
-                <span className="text-xs text-gray-600">Available</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-orange-500 mr-1"></div>
-                <span className="text-xs text-gray-600">Selling Fast</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
-                <span className="text-xs text-gray-600">Coming Soon</span>
-              </div>
-            </div>
-            
-            {/* Interactive Map */}
-            <div className="relative h-96 border border-gray-200 rounded-xl overflow-hidden mb-3">
-              <div 
-                ref={mapRef}
-                className={cn(
-                  "absolute inset-0 cursor-grab bg-gray-50",
-                  isDragging && "cursor-grabbing"
-                )}
-                style={{
-                  backgroundImage: "url('/images/map-background.png')",
-                  backgroundPosition: 'center',
-                  backgroundSize: 'cover',
-                  transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`
-                }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                {/* Map Background Goes Here */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Map className="h-24 w-24 text-blue-200" />
+              exit={{ opacity: 0, x: "100%" }}
+              className="absolute top-0 right-0 bottom-0 w-80 bg-white z-10 shadow-lg rounded-l-xl overflow-y-auto"
+            >
+              <div className="p-4 sticky top-0 bg-white z-10 border-b">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold">All Projects</h2>
+                  <Button variant="ghost" size="icon" onClick={() => setShowProjectList(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                
-                {/* Project Markers */}
-                {projects.map((project) => (
-                  <Link
-                    key={project.id} 
-                    href={`/guest/explore/${project.id}`}
-                    className={cn(
-                      "absolute group transition-all duration-200 hover:z-10",
-                      isDragging ? "pointer-events-none" : "pointer-events-auto"
-                    )}
-                    style={{
-                      left: `${project.coordinates.x}px`,
-                      top: `${project.coordinates.y}px`,
-                      transform: `scale(${1/zoom})` // Counter the zoom effect for consistent sizes
-                    }}
-                  >
-                    <div className="relative">
-                      <div className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center",
-                        getMarkerColor(project.status),
-                        "shadow-lg group-hover:scale-110 transition-transform"
-                      )}>
-                        <MapPin className="h-4 w-4 text-white" />
-                      </div>
-                      
-                      {/* Tooltip */}
-                      <div className={cn(
-                        "absolute top-full left-1/2 transform -translate-x-1/2 mt-1",
-                        "bg-white rounded-lg py-1.5 px-2 shadow-lg border border-gray-200",
-                        "transition-opacity duration-200 w-48",
-                        "opacity-0 group-hover:opacity-100 pointer-events-none"
-                      )}>
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-medium text-xs truncate max-w-[100px]">{project.name}</h3>
-                          <Badge className={cn("text-[8px] px-1.5 py-0.5", getStatusBadge(project.status))}>
-                            {getStatusLabel(project.status)}
-                          </Badge>
-                        </div>
-                        <p className="text-[9px] text-gray-500 truncate">{project.location}</p>
-                        {project.plotsAvailable > 0 && (
-                          <p className="text-[9px] text-green-600 mt-0.5">{project.plotsAvailable} plots available</p>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
               </div>
               
-              <div className="text-xs text-center text-gray-500 mt-2">
-                Drag to move around • Pinch or use buttons to zoom
+              <div className="p-3 space-y-3">
+                {projects.map(project => (
+                  <Card key={project.id} className={`overflow-hidden transition-all ${selectedProject === project.id ? 'ring-2 ring-blue-500' : ''}`}>
+                    <CardContent className="p-0">
+                      <div 
+                        className="flex items-start p-3 cursor-pointer" 
+                        onClick={() => {
+                          focusOnProject(project.id);
+                          setShowProjectList(false);
+                        }}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${getMarkerColor(project.status)}`}>
+                          <MapPin className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium truncate">{project.name}</h3>
+                            <Badge className={getStatusBadge(project.status)}>
+                              {getStatusLabel(project.status)}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-gray-500">{project.location}</p>
+                          <p className="text-xs mt-1">
+                            {project.plotsAvailable > 0 
+                              ? <span className="text-green-600">{project.plotsAvailable} of {project.totalPlots} plots available</span>
+                              : <span className="text-gray-500">Coming soon</span>
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Interactive Map */}
+        <div className="absolute inset-0 bg-gray-100 rounded-xl overflow-hidden">
+          <div className="absolute top-4 right-4 z-10 bg-white rounded-lg shadow-md">
+            <div className="flex flex-col gap-1 p-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomIn}>
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomOut}>
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={resetView}>
+                <Maximize className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           
-          {/* Project List */}
-          <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">All Projects</h2>
-            
-            <div className="space-y-3">
-              {projects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/guest/explore/${project.id}`}
-                  className="flex items-start p-3 border border-gray-100 rounded-xl hover:border-blue-200 transition-all"
+          <div 
+            ref={mapRef}
+            className={cn(
+              "absolute inset-0 cursor-grab bg-blue-50",
+              isDragging && "cursor-grabbing"
+            )}
+            style={{
+              backgroundImage: "url('/images/map-background.png')",
+              backgroundPosition: 'center',
+              backgroundSize: 'cover',
+              transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`
+            }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Project Markers */}
+            {projects.map((project) => (
+              <div
+                key={project.id} 
+                className={cn(
+                  "absolute group transition-all duration-200 hover:z-10",
+                  isDragging ? "pointer-events-none" : "pointer-events-auto"
+                )}
+                style={{
+                  left: `${project.coordinates.x}px`,
+                  top: `${project.coordinates.y}px`,
+                  transform: `scale(${1/zoom})` // Counter the zoom effect for consistent sizes
+                }}
+              >
+                <div 
+                  className="relative cursor-pointer"
+                  onClick={() => focusOnProject(project.id)}
                 >
                   <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mr-3",
-                    getMarkerColor(project.status) + '/20'
+                    "w-8 h-8 rounded-full flex items-center justify-center",
+                    getMarkerColor(project.status),
+                    "shadow-lg group-hover:scale-110 transition-transform",
+                    selectedProject === project.id ? "ring-2 ring-white" : ""
                   )}>
-                    <MapPin className={cn("h-5 w-5", getMarkerColor(project.status).replace('bg-', 'text-'))} />
+                    <MapPin className="h-5 w-5 text-white" />
                   </div>
-                  <div className="flex-grow">
-                    <div className="flex justify-between">
-                      <h3 className="font-medium text-sm">{project.name}</h3>
+                  
+                  {/* Tooltip */}
+                  <div className={cn(
+                    "absolute top-full left-1/2 transform -translate-x-1/2 mt-1",
+                    "bg-white rounded-lg py-2 px-3 shadow-lg border border-gray-200",
+                    "transition-opacity duration-200 w-48",
+                    "opacity-0 group-hover:opacity-100 pointer-events-none"
+                  )}>
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium text-sm truncate max-w-[120px]">{project.name}</h3>
                       <Badge className={getStatusBadge(project.status)}>
                         {getStatusLabel(project.status)}
                       </Badge>
                     </div>
-                    <p className="text-xs text-gray-500">{project.location}</p>
-                    {project.plotsAvailable > 0 ? (
+                    <p className="text-xs text-gray-500 truncate">{project.location}</p>
+                    {project.plotsAvailable > 0 && (
                       <p className="text-xs text-green-600 mt-1">{project.plotsAvailable} plots available</p>
-                    ) : (
-                      <p className="text-xs text-gray-500 mt-1">Coming soon</p>
                     )}
                   </div>
-                </Link>
-              ))}
-            </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </motion.div>
-      </AppShell>
-    </ProtectedRoute>
+        </div>
+      </div>
+    </div>
   )
 } 

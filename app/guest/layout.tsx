@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { Building, Calendar, QrCode, MessageSquare, Map, Bookmark, User, LogOut } from "lucide-react"
+import { Building, Calendar, QrCode, MessageSquare, Map, Bookmark, User, LogOut, Home } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import ProtectedRoute from "@/components/protected-route"
 import AppShell from "@/components/layout/app-shell"
@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 
 const navItems = [
+  {
+    title: "Dashboard",
+    href: "/guest/dashboard",
+    icon: <Home className="h-5 w-5" />,
+    mobileLabel: "Home",
+  },
   {
     title: "Explore Projects",
     href: "/guest/explore",
