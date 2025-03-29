@@ -66,7 +66,7 @@ export async function getAdminUsers() {
           displayName: doc.data().displayName,
           role: doc.data().role,
           disabled: doc.data().disabled || false,
-          createdAt: doc.data().createdAt.toDate().toISOString(),
+          createdAt: doc.data().createdAt ? doc.data().createdAt.toDate().toISOString() : new Date().toISOString(),
         }) as AdminUserData,
     )
 
