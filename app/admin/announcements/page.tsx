@@ -187,7 +187,7 @@ export default function AnnouncementsPage() {
         title,
         message,
         targetRoles: selectedRoles,
-        publishAt,
+        publishAt: publishAt ? publishAt.toISOString() : undefined,
         createdBy: user?.uid || "",
       })
 

@@ -111,8 +111,6 @@ export default function AdminCCTVPage() {
             value={selectedProjectId}
             onValueChange={handleProjectChange}
             disabled={loading || projects.length === 0}
-            onValueChange={handleProjectChange}
-            disabled={loading || projects.length === 0}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a project" />
