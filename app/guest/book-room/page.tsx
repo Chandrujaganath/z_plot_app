@@ -4,7 +4,7 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Calendar as CalendarIcon, Clock, ArrowRight, ChevronLeft, ChevronRight, BedDouble, User, CreditCard, Check } from "lucide-react"
+import { Calendar as CalendarIcon, Clock, ArrowRight, ChevronLeft, ChevronRight, BedDouble, User, CreditCard, Check, Home, MessageSquare } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -94,8 +94,6 @@ const timeSlots = [
   "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM",
   "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM"
 ]
-
-import { Home, MessageSquare } from "lucide-react"
 
 export default function BookRoomPage() {
   const { user } = useAuth()
