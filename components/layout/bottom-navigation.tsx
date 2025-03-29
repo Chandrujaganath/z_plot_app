@@ -72,12 +72,33 @@ export default function BottomNavigation({
   // Define navigation items based on user role
   const getNavItems = (): NavItem[] => {
     if (propNavItems && propNavItems.length) {
-      // Use provided items but limit to 5 items max to fit mobile screens
+      // For guest role, ensure the dashboard is included in the navigation
+      if (userRole === "guest") {
+        // Find the dashboard item
+        const dashboardItem = propNavItems.find(item => item.href === "/guest/dashboard") || {
+          icon: <Home className="h-5 w-5" />,
+          title: "Dashboard",
+          mobileLabel: "Home",
+          href: "/guest/dashboard"
+        };
+        
+        // Add dashboard and then other important items (up to 4 more)
+        const otherItems = propNavItems
+          .filter(item => item.href !== "/guest/dashboard")
+          .slice(0, 4);
+        
+        return [dashboardItem, ...otherItems].map(item => ({
+          ...item,
+          mobileLabel: item.mobileLabel || item.title || item.href.split('/').pop() || "Menu"
+        }));
+      }
+      
+      // For other roles, use provided items but limit to 5 items max
       return propNavItems.slice(0, 5).map(item => ({
         ...item,
         // For consistent interface - if mobileLabel doesn't exist, use title
         mobileLabel: item.mobileLabel || item.title || item.href.split('/').pop() || "Menu"
-      }))
+      }));
     }
 
     // Fallback navigation items per role
@@ -85,7 +106,7 @@ export default function BottomNavigation({
     switch (userRole) {
       case "guest":
         return [
-          { icon: <Home className="h-5 w-5" />, title: "Home", mobileLabel: "Home", href: "/guest/dashboard" },
+          { icon: <Home className="h-5 w-5" />, title: "Dashboard", mobileLabel: "Home", href: "/guest/dashboard" },
           { icon: <Building className="h-5 w-5" />, title: "Explore", mobileLabel: "Explore", href: "/guest/explore" },
           { icon: <Calendar className="h-5 w-5" />, title: "Book Visit", mobileLabel: "Book", href: "/guest/book-visit" },
           { icon: <QrCode className="h-5 w-5" />, title: "QR Code", mobileLabel: "QR", href: "/guest/qr-viewer" },
