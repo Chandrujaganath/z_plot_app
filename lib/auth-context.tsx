@@ -41,40 +41,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = userDoc.data()
         setUserRole(userData.role as UserRole)
 
-        // Redirect based on role and current path
-        const pathname = window.location.pathname
+        // Only redirect in client-side environment
+        if (typeof window !== 'undefined') {
+          // Redirect based on role and current path
+          const pathname = window.location.pathname
 
-        // Only redirect if on login page or root
-        if (pathname === "/login" || pathname === "/") {
-          // Redirect based on role
-          switch (userData.role) {
-            case "superadmin":
-              router.push("/super-admin/dashboard")
-              break
-            case "admin":
-              router.push("/admin/dashboard")
-              break
-            case "manager":
-              router.push("/manager/dashboard")
-              break
-            case "client":
-              router.push("/client/dashboard")
-              break
-            case "guest":
-              router.push("/guest/dashboard")
-              break
-            default:
-              router.push("/unauthorized")
+          // Only redirect if on login page or root
+          if (pathname === "/login" || pathname === "/") {
+            // Redirect based on role
+            switch (userData.role) {
+              case "superadmin":
+                router.push("/super-admin/dashboard")
+                break
+              case "admin":
+                router.push("/admin/dashboard")
+                break
+              case "manager":
+                router.push("/manager/dashboard")
+                break
+              case "client":
+                router.push("/client/dashboard")
+                break
+              case "guest":
+                router.push("/guest/dashboard")
+                break
+              default:
+                router.push("/unauthorized")
+            }
           }
         }
+      } else {
+        // User document doesn't exist - handle gracefully
+        console.warn(`User document not found for uid: ${uid}`)
+        setUserRole("guest") // Default to guest if no role is found
       }
     } catch (error) {
       console.error("Error fetching user role:", error)
+      // Don't redirect on error, just log it
     }
   }
 
   // Listen for auth state changes
   useEffect(() => {
+    // Only run auth state listener in browser environment
+    if (typeof window === 'undefined') {
+      setLoading(false)
+      return
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
 
@@ -95,6 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setLoading(false)
+    }, (error) => {
+      // Handle auth state change errors
+      console.error("Auth state change error:", error)
+      setLoading(false)
     })
 
     return () => unsubscribe()
@@ -102,49 +120,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Register a new user
   const register = async (email: string, password: string, name: string, role: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-    const user = userCredential.user
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
 
-    // Update profile with display name
-    await firebaseUpdateProfile(user, {
-      displayName: name,
-    })
+      // Update profile with display name
+      await firebaseUpdateProfile(user, {
+        displayName: name,
+      })
 
-    // Create user document in Firestore
-    await setDoc(doc(db, "users", user.uid), {
-      name,
-      email,
-      role,
-      createdAt: new Date().toISOString(),
-    })
+      // Create user document in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        name,
+        email,
+        role,
+        createdAt: new Date().toISOString(),
+      })
 
-    // Role will be set by the auth state listener
+      // Role will be set by the auth state listener
+    } catch (error) {
+      console.error("Registration error:", error)
+      throw error; // Re-throw for UI handling
+    }
   }
 
   // Sign in existing user
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password)
-    // Role and redirect handled by auth state listener
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      // Role and redirect handled by auth state listener
+    } catch (error) {
+      console.error("Sign in error:", error)
+      throw error; // Re-throw for UI handling
+    }
   }
 
   // Sign out
   const logout = async () => {
-    await signOut(auth)
-    router.push("/login")
+    try {
+      await signOut(auth)
+      router.push("/login")
+    } catch (error) {
+      console.error("Logout error:", error)
+      // Still redirect even if there's an error
+      router.push("/login")
+    }
   }
 
   // Update user profile
   const updateProfile = async (displayName?: string, photoURL?: string) => {
     if (!user) return
 
-    const updateData: {displayName?: string, photoURL?: string} = {}
-    if (displayName) updateData.displayName = displayName
-    if (photoURL) updateData.photoURL = photoURL
+    try {
+      const updateData: {displayName?: string, photoURL?: string} = {}
+      if (displayName) updateData.displayName = displayName
+      if (photoURL) updateData.photoURL = photoURL
 
-    await firebaseUpdateProfile(user, updateData)
-    
-    // Update the local user state
-    setUser({ ...user, ...updateData })
+      await firebaseUpdateProfile(user, updateData)
+      
+      // Update the local user state
+      setUser({ ...user, ...updateData })
+    } catch (error) {
+      console.error("Profile update error:", error)
+      throw error; // Re-throw for UI handling
+    }
   }
 
   const value = {
@@ -167,4 +206,3 @@ export function useAuth() {
   }
   return context
 }
-

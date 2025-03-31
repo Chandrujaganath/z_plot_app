@@ -8,6 +8,7 @@ const apps = getApps()
 if (!apps.length) {
   try {
     // Handle private key formatting for Vercel - it needs to replace escaped newlines
+    // Vercel stores multiline environment variables with literal "\n" characters
     const privateKey = process.env.FIREBASE_PRIVATE_KEY
       ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
       : undefined
@@ -35,6 +36,7 @@ if (!apps.length) {
           clientEmail,
           privateKey,
         }),
+        databaseURL: `https://${projectId}.firebaseio.com`,
       })
       console.log("Firebase Admin initialized successfully")
     }
@@ -53,4 +55,3 @@ if (!apps.length) {
 export const auth = getAuth()
 export const adminAuth = auth // Alias for backward compatibility
 export const adminDb = getFirestore()
-
